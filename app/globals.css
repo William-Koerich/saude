@@ -133,8 +133,3 @@
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
-
-::selection {
-  background-color: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-}

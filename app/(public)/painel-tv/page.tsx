@@ -1,24 +1,66 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Volume2 } from "lucide-react"
+import { io, Socket } from "socket.io-client"
+import { useSearchParams } from "next/navigation"
 
 export default function PainelTV() {
   const [nomeAtual, setNomeAtual] = useState<string | null>(null)
+  const [ultimosChamados, setUltimosChamados] = useState<string[]>([])
+  const [audioLiberado, setAudioLiberado] = useState(false)
+
+  const searchParams = useSearchParams()
+  const unidadeId = searchParams.get("unidade")
+
+  // 🔓 Libera áudio no primeiro clique em qualquer lugar da tela
+  useEffect(() => {
+    const liberarAudio = () => {
+      if (!audioLiberado) {
+        const msg = new SpeechSynthesisUtterance("")
+        speechSynthesis.speak(msg)
+        speechSynthesis.cancel()
+        setAudioLiberado(true)
+        console.log("🔊 Áudio liberado")
+      }
+    }
+
+    window.addEventListener("click", liberarAudio)
+
+    return () => {
+      window.removeEventListener("click", liberarAudio)
+    }
+  }, [audioLiberado])
+
+  useEffect(() => {
+  speechSynthesis.getVoices()
+}, [])
 
   function chamarPaciente(nome: string) {
   setNomeAtual(nome)
 
-  const audio = new Audio("/sons/chamada.mp3")
+  setUltimosChamados((prev) => {
+    const atualizados = [nome, ...prev.filter((n) => n !== nome)]
+    return atualizados.slice(0, 3)
+  })
 
-  audio.play()
+  const falar = () => {
+    speechSynthesis.cancel()
 
-  // Quando o áudio terminar, ele chama o nome
-  audio.onended = () => {
     const msg = new SpeechSynthesisUtterance(
       `Atenção, ${nome}, favor dirigir-se à recepção`
     )
+
+    const vozes = speechSynthesis.getVoices()
+
+    const vozPtBr =
+      vozes.find((v) => v.lang === "pt-BR") ||
+      vozes.find((v) => v.lang.startsWith("pt"))
+
+    if (vozPtBr) {
+      msg.voice = vozPtBr
+    }
 
     msg.lang = "pt-BR"
     msg.rate = 0.9
@@ -26,12 +68,44 @@ export default function PainelTV() {
 
     speechSynthesis.speak(msg)
   }
+
+  // 🔥 Se as vozes ainda não carregaram, espera carregar
+  if (speechSynthesis.getVoices().length === 0) {
+    speechSynthesis.onvoiceschanged = () => {
+      falar()
+    }
+  } else {
+    falar()
+  }
 }
 
-  return (
-    <div className="min-h-screen bg-linear-to-br from-slate-950 via-black to-slate-950 flex flex-col items-center justify-center p-10">
+  useEffect(() => {
+    if (!unidadeId) return
 
-      {/* TÍTULO */}
+    const socket: Socket = io("http://localhost:3010", {
+      transports: ["websocket"],
+      query: {
+        unidadeId: unidadeId,
+      },
+    })
+
+    socket.on("connect", () => {
+      console.log("📺 Conectado:", socket.id)
+    })
+
+    socket.on("chamarPaciente", (data: { nome: string }) => {
+      console.log("📢 Recebido:", data)
+      chamarPaciente(data.nome)
+    })
+
+    return () => {
+      socket.disconnect()
+    }
+  }, [unidadeId, audioLiberado])
+
+  return (
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-black to-slate-950 flex flex-col items-center justify-center p-10 relative">
+
       <div className="absolute top-10 text-center">
         <h1 className="text-5xl text-white font-semibold">
           Painel de Chamadas
@@ -41,7 +115,6 @@ export default function PainelTV() {
         </p>
       </div>
 
-      {/* NOME EM DESTAQUE */}
       <AnimatePresence mode="wait">
         {nomeAtual ? (
           <motion.div
@@ -68,7 +141,35 @@ export default function PainelTV() {
         )}
       </AnimatePresence>
 
-      {/* BOTÃO TEMPORÁRIO PARA TESTE (REMOVER QUANDO TIVER SOCKET) */}
+      {ultimosChamados.length > 0 && (
+        <div className="absolute bottom-28 w-full max-w-4xl">
+          <h2 className="text-2xl text-slate-400 text-center mb-6">
+            Últimas chamadas
+          </h2>
+
+          <div className="grid grid-cols-3 gap-6">
+            {ultimosChamados.map((nome, index) => (
+              <div
+                key={index}
+                className={`rounded-2xl p-6 text-center border ${
+                  index === 0
+                    ? "bg-emerald-900/40 border-emerald-500"
+                    : "bg-slate-800/60 border-slate-700"
+                }`}
+              >
+                <p
+                  className={`text-2xl font-medium wrap-break-words ${
+                    index === 0 ? "text-emerald-300" : "text-slate-300"
+                  }`}
+                >
+                  {nome}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="absolute bottom-10 flex gap-4">
         <button
           onClick={() => chamarPaciente("William Koerich")}
@@ -77,15 +178,7 @@ export default function PainelTV() {
           <Volume2 size={20} />
           Testar Chamada
         </button>
-
-        <button
-          onClick={() => setNomeAtual(null)}
-          className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-xl transition"
-        >
-          Limpar Tela
-        </button>
       </div>
-
     </div>
   )
 }

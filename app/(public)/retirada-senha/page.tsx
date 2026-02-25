@@ -15,11 +15,47 @@ export default function RetiradaSenhaPage() {
   const [nome, setNome] = useState("")
   const [confirmado, setConfirmado] = useState(false)
   const [contador, setContador] = useState(10)
+  const [loadingChamada, setLoadingChamada] = useState(false)
+  console.log(contador)
 
-  function confirmarAtendimento() {
+  async function confirmarAtendimento() {
+  try {
+    setLoadingChamada(true)
+
+    const response = await fetch("http://localhost:3010/fila", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-unidade-id": "35018f68-6023-43a6-b8df-5fd5f18c0b6d", // 👈 importante
+      },
+      body: JSON.stringify({
+        nome,
+        tipo,
+      }),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(data.error ?? "Erro ao criar senha")
+    }
+
+    console.log("Senha criada:", data)
+
     setContador(10)
     setConfirmado(true)
+
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.log("Erro ao criar senha:", error)
+      alert(error.message)
+    } else {
+      alert("Erro inesperado")
+    }
+  } finally {
+    setLoadingChamada(false)
   }
+}
 
   function resetarTudo() {
     setTipo(null)
@@ -27,6 +63,37 @@ export default function RetiradaSenhaPage() {
     setConfirmado(false)
     setContador(10)
   }
+
+  async function chamarPacienteBackend(): Promise<void> {
+  try {
+    setLoadingChamada(true)
+
+    const response = await fetch("http://localhost:3010/fila/chamar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-unidade-id": "35018f68-6023-43a6-b8df-5fd5f18c0b6d",
+      },
+    })
+
+    const data: { error?: string } = await response.json()
+
+    console.log("Paciente chamado:", data)
+
+    if (!response.ok) {
+      throw new Error(data.error ?? "Erro ao chamar paciente")
+    }
+
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      alert(error.message)
+    } else {
+      alert("Erro inesperado ao chamar paciente")
+    }
+  } finally {
+    setLoadingChamada(false)
+  }
+}
 
   // Temporizador automático
   useEffect(() => {
@@ -52,7 +119,6 @@ export default function RetiradaSenhaPage() {
 
         <AnimatePresence mode="wait">
 
-          {/* TELA INICIAL */}
           {!tipo && !confirmado && (
             <motion.div
               key="selecionar"
@@ -105,7 +171,6 @@ export default function RetiradaSenhaPage() {
             </motion.div>
           )}
 
-          {/* TELA FORMULÁRIO */}
           {tipo && !confirmado && (
             <motion.div
               key="formulario"
@@ -138,34 +203,16 @@ export default function RetiradaSenhaPage() {
 
               <div className="flex flex-col gap-4 pt-2">
                 <Button
-                  disabled={nome.trim().length < 5}
+                  disabled={nome.trim().length < 5 || loadingChamada}
                   onClick={confirmarAtendimento}
-                  className="
-                    w-full h-14 text-lg font-semibold
-                    bg-linear-to-r from-emerald-500 to-emerald-600
-                    hover:from-emerald-600 hover:to-emerald-700
-                    active:scale-[0.98]
-                    shadow-lg shadow-emerald-900/40
-                    transition-all duration-200
-                    rounded-2xl
-                    disabled:opacity-40 disabled:cursor-not-allowed
-                  "
+                  className="w-full h-14 text-lg font-semibold bg-linear-to-r from-emerald-500 to-emerald-600 rounded-2xl"
                 >
-                  Confirmar Atendimento
+                  {loadingChamada ? "Gerando senha..." : "Confirmar Atendimento"}
                 </Button>
 
                 <Button
                   onClick={resetarTudo}
-                  className="
-                    w-full h-14 text-lg font-medium
-                    bg-slate-800
-                    text-slate-200
-                    border border-slate-700
-                    hover:bg-slate-700
-                    active:scale-[0.98]
-                    transition-all duration-200
-                    rounded-2xl
-                  "
+                  className="w-full h-14 text-lg bg-slate-800 border border-slate-700 rounded-2xl"
                 >
                   Voltar
                 </Button>
@@ -173,7 +220,6 @@ export default function RetiradaSenhaPage() {
             </motion.div>
           )}
 
-          {/* TELA CONFIRMAÇÃO */}
           {confirmado && (
             <motion.div
               key="confirmado"
@@ -203,41 +249,21 @@ export default function RetiradaSenhaPage() {
                 Aguarde a chamada no painel.
               </p>
 
-              <p className="text-slate-400">
-                Retornando em{" "}
-                <span className="text-emerald-400 font-semibold">
-                  {contador}
-                </span>{" "}
-                segundos...
-              </p>
+              {/* 🔥 BOTÃO DE TESTE SOCKET */}
+              <Button
+                onClick={chamarPacienteBackend}
+                disabled={loadingChamada}
+                className="w-full h-14 text-lg font-semibold bg-blue-600 hover:bg-blue-700 rounded-2xl"
+              >
+                {loadingChamada ? "Chamando..." : "Testar Chamada na TV"}
+              </Button>
 
-              <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: "100%" }}
-                  animate={{ width: `${(contador / 10) * 100}%` }}
-                  transition={{ ease: "linear", duration: 1 }}
-                  className="h-full bg-emerald-400"
-                />
-              </div>
-
-              {/* BOTÃO VOLTAR MANUAL */}
               <Button
                 onClick={resetarTudo}
-                className="
-                  w-full h-14 text-lg font-medium
-                  bg-slate-800
-                  text-slate-200
-                  border border-slate-700
-                  hover:bg-slate-700
-                  active:scale-[0.98]
-                  transition-all duration-200
-                  rounded-2xl
-                  mt-4
-                "
+                className="w-full h-14 text-lg bg-slate-800 border border-slate-700 rounded-2xl"
               >
                 Voltar para Início
               </Button>
-
             </motion.div>
           )}
 

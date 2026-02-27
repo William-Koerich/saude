@@ -14,18 +14,26 @@ export default function LoginPage() {
 
   const [cpf, setCpf] = useState("")
   const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
+  e.preventDefault()
+  setLoading(true)
+  setError("")
 
-    try {
-      await signIn(cpf, password)
-    } finally {
-      setLoading(false)
-    }
+  try {
+    await signIn(cpf, password)
+  } catch (err: unknown) {
+  if (err instanceof Error) {
+    setError(err.message)
+  } else {
+    setError("Erro ao fazer login")
   }
+} finally {
+    setLoading(false)
+  }
+}
 
   return (
     <div className="min-h-screen grid md:grid-cols-2 bg-slate-950">
@@ -101,6 +109,12 @@ export default function LoginPage() {
               )}
               Entrar
             </Button>
+
+            {error && (
+              <p className="text-red-500 text-sm text-center">
+                {error}
+              </p>
+            )}
 
           </form>
 

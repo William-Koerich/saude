@@ -1,12 +1,20 @@
 "use client"
 
-import { createContext, useContext, useState, ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+} from "react"
 import { useRouter } from "next/navigation"
+import { api } from "@/lib/api"
 
 export type User = {
+  id: string
   cpf: string
-  name?: string
-  role?: "ADMIN" | "USER"
+  nome: string
+  funcao: string
+  unidadeId: string
 }
 
 type AuthContextType = {
@@ -20,39 +28,39 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
 
-  // ✅ Inicialização correta sem useEffect
+  // ✅ Inicialização segura (SEM useEffect)
   const [user, setUser] = useState<User | null>(() => {
     if (typeof window === "undefined") return null
 
-    const token = localStorage.getItem("token")
+    const storedUser = localStorage.getItem("user")
 
-    if (!token) return null
-
-    // 🔥 depois você vai decodificar o JWT aqui
-    return {
-      cpf: "mock-user",
-      role: "USER",
-    }
+    return storedUser ? JSON.parse(storedUser) : null
   })
 
   async function signIn(cpf: string, password: string) {
-    if (cpf && password) {
-      const fakeToken = "jwt.mock.token"
+    const response = await api.post("/funcionarios/login", {
+      cpf,
+      senha: password,
+    })
 
-      localStorage.setItem("token", fakeToken)
+    const { token, funcionario } = response.data
 
-      setUser({
-        cpf,
-        role: "USER",
-      })
+    localStorage.setItem("token", token)
+    localStorage.setItem("user", JSON.stringify(funcionario))
+    localStorage.setItem("unidadeId", funcionario.unidadeId)
 
-      router.push("/dashboard")
-    }
+    setUser(funcionario)
+
+    router.push("/dashboard")
   }
 
   function signOut() {
     localStorage.removeItem("token")
+    localStorage.removeItem("user")
+    localStorage.removeItem("unidadeId")
+
     setUser(null)
+
     router.push("/login")
   }
 

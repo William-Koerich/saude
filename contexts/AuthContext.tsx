@@ -23,43 +23,45 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
-  // ✅ Inicialização segura (SEM useEffect)
+  // ✅ Inicialização segura com lazy initializer
+  // start with null on both server and client so the first render matches
   const [user, setUser] = useState<User | null>(() => {
     if (typeof window === "undefined") return null;
-
     const storedUser = localStorage.getItem("user");
-
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
   async function signIn(cpf: string, password: string) {
-    const response = await api.post("/funcionarios/login", {
-      cpf,
-      senha: password,
-    });
+  const response = await api.post("/funcionarios/login", { 
+    cpf,
+    senha: password,
+  })
 
-    const { token, funcionario } = response.data;
+  const { token, funcionario } = response.data
 
-    // 🔥 SALVAR COOKIE
-    document.cookie = `token=${token}; path=/`;
+  // ✅ salvar cookie para middleware
+  document.cookie = `token=${token}; path=/;`
 
-    localStorage.setItem("user", JSON.stringify(funcionario));
-    localStorage.setItem("unidadeId", funcionario.unidadeId);
+  // pode manter se quiser
+  localStorage.setItem("token", token)
+  localStorage.setItem("user", JSON.stringify(funcionario))
+  localStorage.setItem("unidadeId", funcionario.unidadeId)
 
-    setUser(funcionario);
+  setUser(funcionario)
 
-    router.push("/dashboard");
-  }
+  router.push("/dashboard")
+}
 
   function signOut() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    localStorage.removeItem("unidadeId");
+  document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;"
 
-    setUser(null);
+  localStorage.removeItem("token")
+  localStorage.removeItem("user")
+  localStorage.removeItem("unidadeId")
 
-    router.push("/login");
-  }
+  setUser(null)
+  router.push("/login")
+}
 
   return (
     <AuthContext.Provider value={{ user, signIn, signOut }}>

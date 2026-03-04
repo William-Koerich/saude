@@ -30,6 +30,7 @@ export default function DashboardLayout({
 
   const menu = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "ficha-atendimento", label: "Ficha de Atendimento", icon: List },
     { href: "/dashboard/unidades", label: "Unidades", icon: Building2 },
     { href: "/dashboard/funcionarios", label: "Funcionários", icon: Users },
     { href: "/dashboard/fila", label: "Fila", icon: List },

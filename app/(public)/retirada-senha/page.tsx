@@ -1,124 +1,90 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { HeartPulse, Users, CheckCircle2 } from "lucide-react"
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { HeartPulse, Users, CheckCircle2 } from "lucide-react";
 
-type Tipo = "PREFERENCIAL" | "NORMAL" | null
+type Tipo = "PREFERENCIAL" | "NORMAL" | null;
 
 export default function RetiradaSenhaPage() {
-  const [tipo, setTipo] = useState<Tipo>(null)
-  const [nome, setNome] = useState("")
-  const [confirmado, setConfirmado] = useState(false)
-  const [contador, setContador] = useState(10)
-  const [loadingChamada, setLoadingChamada] = useState(false)
-  console.log(contador)
+  const [tipo, setTipo] = useState<Tipo>(null);
+  const [nome, setNome] = useState("");
+  const [confirmado, setConfirmado] = useState(false);
+  const [contador, setContador] = useState(10);
+  const [loadingChamada, setLoadingChamada] = useState(false);
+  console.log(contador);
 
   async function confirmarAtendimento() {
-  try {
-    setLoadingChamada(true)
+    try {
+      setLoadingChamada(true);
 
-    const response = await fetch("http://localhost:3010/fila", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-unidade-id": "35018f68-6023-43a6-b8df-5fd5f18c0b6d", // 👈 importante
-      },
-      body: JSON.stringify({
-        nome,
-        tipo,
-      }),
-    })
+      const response = await fetch("http://localhost:3010/fila", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-unidade-id": "35018f68-6023-43a6-b8df-5fd5f18c0b6d", // 👈 importante
+        },
+        body: JSON.stringify({
+          nome,
+          tipo,
+        }),
+      });
 
-    const data = await response.json()
+      const data = await response.json();
 
-    if (!response.ok) {
-      throw new Error(data.error ?? "Erro ao criar senha")
+      if (!response.ok) {
+        throw new Error(data.error ?? "Erro ao criar senha");
+      }
+
+      console.log("Senha criada:", data);
+
+      setContador(10);
+      setConfirmado(true);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.log("Erro ao criar senha:", error);
+        alert(error.message);
+      } else {
+        alert("Erro inesperado");
+      }
+    } finally {
+      setLoadingChamada(false);
     }
-
-    console.log("Senha criada:", data)
-
-    setContador(10)
-    setConfirmado(true)
-
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.log("Erro ao criar senha:", error)
-      alert(error.message)
-    } else {
-      alert("Erro inesperado")
-    }
-  } finally {
-    setLoadingChamada(false)
   }
-}
 
   function resetarTudo() {
-    setTipo(null)
-    setNome("")
-    setConfirmado(false)
-    setContador(10)
+    setTipo(null);
+    setNome("");
+    setConfirmado(false);
+    setContador(10);
   }
-
-  async function chamarPacienteBackend(): Promise<void> {
-  try {
-    setLoadingChamada(true)
-
-    const response = await fetch("http://localhost:3010/fila/chamar", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-unidade-id": "35018f68-6023-43a6-b8df-5fd5f18c0b6d",
-      },
-    })
-
-    const data: { error?: string } = await response.json()
-
-    console.log("Paciente chamado:", data)
-
-    if (!response.ok) {
-      throw new Error(data.error ?? "Erro ao chamar paciente")
-    }
-
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      alert(error.message)
-    } else {
-      alert("Erro inesperado ao chamar paciente")
-    }
-  } finally {
-    setLoadingChamada(false)
-  }
-}
 
   // Temporizador automático
   useEffect(() => {
-    if (!confirmado) return
+    if (!confirmado) return;
 
     const interval = setInterval(() => {
       setContador((prev) => {
         if (prev <= 1) {
-          clearInterval(interval)
-          resetarTudo()
-          return 0
+          clearInterval(interval);
+          resetarTudo();
+          return 0;
         }
-        return prev - 1
-      })
-    }, 1000)
+        return prev - 1;
+      });
+    }, 1000);
 
-    return () => clearInterval(interval)
-  }, [confirmado])
+    return () => clearInterval(interval);
+  }, [confirmado]);
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-6">
       <Card className="w-full max-w-xl bg-slate-900/80 backdrop-blur-xl border border-slate-800 rounded-3xl shadow-2xl p-10 overflow-hidden">
-
         <AnimatePresence mode="wait">
-
           {!tipo && !confirmado && (
             <motion.div
               key="selecionar"
@@ -207,7 +173,9 @@ export default function RetiradaSenhaPage() {
                   onClick={confirmarAtendimento}
                   className="w-full h-14 text-lg font-semibold bg-linear-to-r from-emerald-500 to-emerald-600 rounded-2xl"
                 >
-                  {loadingChamada ? "Gerando senha..." : "Confirmar Atendimento"}
+                  {loadingChamada
+                    ? "Gerando senha..."
+                    : "Confirmar Atendimento"}
                 </Button>
 
                 <Button
@@ -236,9 +204,7 @@ export default function RetiradaSenhaPage() {
               </h2>
 
               <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-3xl p-10">
-                <p className="text-slate-400 mb-4">
-                  Nome para chamada
-                </p>
+                <p className="text-slate-400 mb-4">Nome para chamada</p>
 
                 <p className="text-4xl font-bold text-emerald-400 wrap-break-words">
                   {nome}
@@ -249,15 +215,6 @@ export default function RetiradaSenhaPage() {
                 Aguarde a chamada no painel.
               </p>
 
-              {/* 🔥 BOTÃO DE TESTE SOCKET */}
-              <Button
-                onClick={chamarPacienteBackend}
-                disabled={loadingChamada}
-                className="w-full h-14 text-lg font-semibold bg-blue-600 hover:bg-blue-700 rounded-2xl"
-              >
-                {loadingChamada ? "Chamando..." : "Testar Chamada na TV"}
-              </Button>
-
               <Button
                 onClick={resetarTudo}
                 className="w-full h-14 text-lg bg-slate-800 border border-slate-700 rounded-2xl"
@@ -266,10 +223,8 @@ export default function RetiradaSenhaPage() {
               </Button>
             </motion.div>
           )}
-
         </AnimatePresence>
-
       </Card>
     </div>
-  )
+  );
 }

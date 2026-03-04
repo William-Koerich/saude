@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { X } from "lucide-react"
-import { usePathname } from "next/navigation"
+import Link from "next/link";
+import { X } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 interface Props {
-  open: boolean
-  setOpen: (value: boolean) => void
+  open: boolean;
+  setOpen: (value: boolean) => void;
 }
 
 export default function Sidebar({ open, setOpen }: Props) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   const menu = [
     { name: "Dashboard", href: "/dashboard" },
     { name: "Fila", href: "/fila" },
     { name: "Funcionários", href: "/funcionarios" },
-  ]
+  ];
 
   return (
     <>
@@ -39,10 +39,7 @@ export default function Sidebar({ open, setOpen }: Props) {
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="font-bold text-xl">SAÚDE</h2>
 
-          <button
-            className="md:hidden"
-            onClick={() => setOpen(false)}
-          >
+          <button className="md:hidden" onClick={() => setOpen(false)}>
             <X />
           </button>
         </div>
@@ -67,5 +64,5 @@ export default function Sidebar({ open, setOpen }: Props) {
         </nav>
       </aside>
     </>
-  )
+  );
 }

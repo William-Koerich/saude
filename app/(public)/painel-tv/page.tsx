@@ -8,7 +8,8 @@ import { useSearchParams } from "next/navigation"
 
 export default function PainelTV() {
   const [nomeAtual, setNomeAtual] = useState<string | null>(null)
-  const [ultimosChamados, setUltimosChamados] = useState<string[]>([])
+  const [localAtendimentoAtual, setLocalAtendimentoAtual] = useState<string | null>(null)
+  const [ultimosChamados, setUltimosChamados] = useState<Array<{senha: string, localAtendimento: string}>>([])
   const [audioLiberado, setAudioLiberado] = useState(false)
 
   const searchParams = useSearchParams()
@@ -37,11 +38,13 @@ export default function PainelTV() {
   speechSynthesis.getVoices()
 }, [])
 
-  function chamarPaciente(nome: string) {
-  setNomeAtual(nome)
+  function chamarPaciente(senha: string, localAtendimento: string) {
+    console.log("Chamando paciente:", senha, "para", localAtendimento)
+  setNomeAtual(senha)
+  setLocalAtendimentoAtual(localAtendimento)
 
   setUltimosChamados((prev) => {
-    const atualizados = [nome, ...prev.filter((n) => n !== nome)]
+    const atualizados = [{senha, localAtendimento}, ...prev.filter((n) => n.senha !== senha)]
     return atualizados.slice(0, 3)
   })
 
@@ -49,7 +52,7 @@ export default function PainelTV() {
     speechSynthesis.cancel()
 
     const msg = new SpeechSynthesisUtterance(
-      `Atenção, ${nome}, favor dirigir-se à recepção`
+      `Atenção, ${senha}, favor dirigir-se a ${localAtendimento}`
     )
 
     const vozes = speechSynthesis.getVoices()
@@ -93,9 +96,9 @@ export default function PainelTV() {
       console.log("📺 Conectado:", socket.id)
     })
 
-    socket.on("chamarPaciente", (data: { nome: string }) => {
-      console.log("📢 Recebido:", data)
-      chamarPaciente(data.nome)
+    socket.on("chamarPaciente", (data: { senha: string, localAtendimento: string }) => {
+      console.log("📢 Recebido:", data.senha, "para", data.localAtendimento)
+      chamarPaciente(data.senha, data.localAtendimento)
     })
 
     return () => {
@@ -128,6 +131,11 @@ export default function PainelTV() {
             <p className="text-8xl font-bold text-emerald-400 drop-shadow-lg wrap-break-words">
               {nomeAtual}
             </p>
+            {localAtendimentoAtual && (
+              <p className="text-3xl text-emerald-300 mt-4 font-medium">
+                Dirija-se a {localAtendimentoAtual}
+              </p>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -148,7 +156,7 @@ export default function PainelTV() {
           </h2>
 
           <div className="grid grid-cols-3 gap-6">
-            {ultimosChamados.map((nome, index) => (
+            {ultimosChamados.map((chamada, index) => (
               <div
                 key={index}
                 className={`rounded-2xl p-6 text-center border ${
@@ -162,7 +170,14 @@ export default function PainelTV() {
                     index === 0 ? "text-emerald-300" : "text-slate-300"
                   }`}
                 >
-                  {nome}
+                  {chamada.senha}
+                </p>
+                <p
+                  className={`text-sm mt-2 ${
+                    index === 0 ? "text-emerald-400" : "text-slate-400"
+                  }`}
+                >
+                  {chamada.localAtendimento}
                 </p>
               </div>
             ))}
@@ -172,7 +187,7 @@ export default function PainelTV() {
 
       <div className="absolute bottom-10 flex gap-4">
         <button
-          onClick={() => chamarPaciente("William Koerich")}
+          onClick={() => chamarPaciente("William Koerich", "Recepção")}
           className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 transition"
         >
           <Volume2 size={20} />

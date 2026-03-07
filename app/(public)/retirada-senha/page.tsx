@@ -4,23 +4,39 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { HeartPulse, Users, CheckCircle2 } from "lucide-react";
 
 type Tipo = "PREFERENCIAL" | "NORMAL" | null;
 
 export default function RetiradaSenhaPage() {
   const [tipo, setTipo] = useState<Tipo>(null);
-  const [nome, setNome] = useState("");
+  const [senhaGerada, setSenhaGerada] = useState<string | null>(null);
   const [confirmado, setConfirmado] = useState(false);
   const [contador, setContador] = useState(10);
   const [loadingChamada, setLoadingChamada] = useState(false);
+
+  // chama número sequencial persistido em localStorage
+  function getNextNumber(): number {
+    const cur = parseInt(localStorage.getItem("ultimo-numero") || "0", 10);
+    const next = cur + 1;
+    localStorage.setItem("ultimo-numero", String(next));
+    return next;
+  }
+
+  function formatSenha(num: number, tipo: Tipo): string {
+    const padded = String(num).padStart(2, "0");
+    return tipo === "PREFERENCIAL" ? `P${padded}` : `N${padded}`;
+  }
   console.log(contador);
 
   async function confirmarAtendimento() {
     try {
       setLoadingChamada(true);
+
+      // gera senha sequencial localmente
+      const next = getNextNumber();
+      const senha = formatSenha(next, tipo);
+      setSenhaGerada(senha);
 
       const response = await fetch("http://localhost:3010/fila", {
         method: "POST",
@@ -29,7 +45,7 @@ export default function RetiradaSenhaPage() {
           "x-unidade-id": "35018f68-6023-43a6-b8df-5fd5f18c0b6d", // 👈 importante
         },
         body: JSON.stringify({
-          nome,
+          nome: senha,
           tipo,
         }),
       });
@@ -58,7 +74,7 @@ export default function RetiradaSenhaPage() {
 
   function resetarTudo() {
     setTipo(null);
-    setNome("");
+    setSenhaGerada(null);
     setConfirmado(false);
     setContador(10);
   }
@@ -148,28 +164,16 @@ export default function RetiradaSenhaPage() {
             >
               <div className="text-center space-y-2">
                 <h2 className="text-2xl font-semibold text-white">
-                  Identificação do Paciente
+                  Gerar senha {tipo === "PREFERENCIAL" ? "preferencial" : "normal"}
                 </h2>
                 <p className="text-slate-400 text-base">
-                  Informe seu nome completo para chamada
+                  Clique no botão abaixo para receber seu número de senha
                 </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-slate-300 text-base">
-                  Nome Completo
-                </Label>
-                <Input
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder="Digite seu nome completo"
-                  className="h-12 text-base bg-slate-950 border-slate-700 text-white"
-                />
               </div>
 
               <div className="flex flex-col gap-4 pt-2">
                 <Button
-                  disabled={nome.trim().length < 5 || loadingChamada}
+                  disabled={loadingChamada}
                   onClick={confirmarAtendimento}
                   className="w-full h-14 text-lg font-semibold bg-linear-to-r from-emerald-500 to-emerald-600 rounded-2xl"
                 >
@@ -204,10 +208,10 @@ export default function RetiradaSenhaPage() {
               </h2>
 
               <div className="bg-emerald-500/10 border border-emerald-500/40 rounded-3xl p-10">
-                <p className="text-slate-400 mb-4">Nome para chamada</p>
+                <p className="text-slate-400 mb-4">Senha</p>
 
                 <p className="text-4xl font-bold text-emerald-400 wrap-break-words">
-                  {nome}
+                  {senhaGerada}
                 </p>
               </div>
 

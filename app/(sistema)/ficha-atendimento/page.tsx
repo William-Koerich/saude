@@ -30,6 +30,7 @@ export default function FichaAtendimentoPage() {
         },
         body: JSON.stringify({
           localAtendimento: localAtendimento,
+          setor: "TRIAGEM"
         }),
       });
 

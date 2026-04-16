@@ -11,6 +11,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Stethoscope,
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import Link from "next/link"
@@ -30,7 +31,8 @@ export default function DashboardLayout({
 
   const menu = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "ficha-atendimento", label: "Ficha de Atendimento", icon: List },
+    { href: "/ficha-atendimento", label: "Ficha de Atendimento", icon: List },
+    { href: "/triagem", label: "Triagem", icon: Stethoscope },
     { href: "/dashboard/unidades", label: "Unidades", icon: Building2 },
     { href: "/dashboard/funcionarios", label: "Funcionários", icon: Users },
     { href: "/dashboard/fila", label: "Fila", icon: List },

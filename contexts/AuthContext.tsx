@@ -32,25 +32,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   async function signIn(cpf: string, password: string) {
-  const response = await api.post("/funcionarios/login", { 
-    cpf,
-    senha: password,
-  })
+    const response = await api.post("/funcionarios/login", {
+      cpf,
+      senha: password,
+    });
 
-  const { token, funcionario } = response.data
+    console.log("[signIn] response.data:", response.data);
 
-  // ✅ salvar cookie para middleware
-  document.cookie = `token=${token}; path=/;`
+    const { token, unidadeId, funcionario } = response.data;
 
-  // pode manter se quiser
-  localStorage.setItem("token", token)
-  localStorage.setItem("user", JSON.stringify(funcionario))
-  localStorage.setItem("unidadeId", funcionario.unidadeId)
+    console.log("[signIn] token:", token);
+    console.log("[signIn] unidadeId:", unidadeId);
+    console.log("[signIn] funcionario:", funcionario);
 
-  setUser(funcionario)
+    document.cookie = `token=${token}; path=/;`;
 
-  router.push("/dashboard")
-}
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(funcionario));
+    localStorage.setItem("unidadeId", unidadeId);
+
+    console.log("[signIn] localStorage após salvar:", {
+      token: localStorage.getItem("token"),
+      unidadeId: localStorage.getItem("unidadeId"),
+      user: localStorage.getItem("user"),
+    });
+
+    setUser(funcionario);
+
+    router.push("/dashboard");
+  }
 
   function signOut() {
   document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;"

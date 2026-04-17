@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Stethoscope,
+  ClipboardPlus,
 } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import Link from "next/link"
@@ -33,6 +34,7 @@ export default function DashboardLayout({
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/ficha-atendimento", label: "Ficha de Atendimento", icon: List },
     { href: "/triagem", label: "Triagem", icon: Stethoscope },
+    { href: "/consulta", label: "Consulta Médica", icon: ClipboardPlus },
     { href: "/dashboard/unidades", label: "Unidades", icon: Building2 },
     { href: "/dashboard/funcionarios", label: "Funcionários", icon: Users },
     { href: "/dashboard/fila", label: "Fila", icon: List },
